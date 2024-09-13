@@ -9,7 +9,7 @@ use std::thread;
 use std::time::Duration;
 
 fn chat_prompt() {
-    print!("MSG>");
+    print!(">>");
     let _ = std::io::stdout().flush();
 }
 
@@ -18,9 +18,11 @@ fn get_std_input(mtx: Sender<String>) {
     loop {
         chat_prompt();
         let _ = std::io::stdin().read_line(&mut msg);
-        mtx.send(msg.clone()).unwrap();
-        if msg.trim() == "exit".to_string() {
+        if msg.trim() == "leave".to_string() {
+            mtx.send(msg.clone()).unwrap();
             break;
+        } else if msg.trim()[0..5].to_string() == "send ".to_string() {
+            mtx.send((&msg.trim()[5..]).to_string()).unwrap();
         }
         msg = "".to_string();
     }
@@ -71,7 +73,7 @@ fn main() {
         "Starting Async Chat Client, connected to server on {}  ...",
         args[2]
     );
-    println!("You can type `exit` anytime to quit the chat");
+    println!("You can type:\n 1. 'send' then <text> for sending message to other ends\n 2. `leave` anytime to quit this chat");
     tcp_st
         .set_read_timeout(Some(Duration::from_millis(1)))
         .unwrap();
@@ -83,7 +85,7 @@ fn main() {
 
             if !ok_rx.is_err() {
                 ubuff = ok_rx.unwrap();
-                if ubuff.trim() == "exit".to_string() {
+                if ubuff.trim() == "leave".to_string() {
                     msg_type = MsgType::MsgLeave;
                     ubuff = "".to_string();
                 }
